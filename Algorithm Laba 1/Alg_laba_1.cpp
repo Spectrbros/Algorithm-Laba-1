@@ -17,11 +17,123 @@ using namespace std;
 bool output_simple = false;
 bool output_rpn = false;
 
-// Структуры
+//Прототипы функций.
+void menu_commands(int choice);
+
+// Структуры и классы
 struct Node {
     string value;   
     Node* next;
+    Node* prev;
+
+    Node(string data): value(data), next(nullptr), prev(nullptr) {}
 };
+
+class DoublyLinkedList {
+    private:
+        Node* head = nullptr;
+
+        void print_function(const Node* head) {
+            if (head == nullptr) {
+                return;
+            }
+            print_function(head->next);
+            cout << head->value << " ";
+        }
+
+    public:
+        void push_begin(string data) { // добавление в начало
+            Node* new_node = new Node(data);
+            new_node->next = head;
+            if (head != nullptr) {
+                head->prev = new_node;
+            }
+            head = new_node;
+        }
+
+        void push_end(string data) { // добавление в конец
+            if (head == nullptr) {
+                push_begin(data);
+                return;
+            }
+            Node* new_node = new Node(data);
+            Node* last_node = get_last_node();
+            new_node->prev = last_node;
+            last_node->next = new_node;
+        }
+
+        Node* get_last_node() { // получение последнего элемента
+            if (head == nullptr) {
+                return nullptr;
+            }
+
+            Node* temp_head = head;
+            while (temp_head->next) {
+                temp_head = temp_head->next;
+            }
+            return temp_head;
+        }
+
+        int size() { // получение размера списка
+            int count = 0;
+            Node* temp_head = head;
+            while (temp_head) {
+                count++;
+                temp_head = temp_head->next;
+            }
+            return count;
+        }
+
+        string pop() { // вытащить элемент из стека
+            Node* temp = nullptr;
+            string val;
+            if (head == nullptr) {
+                cout << RED << "Ошибка: стек пуст!" << RESET << endl;
+                return "";
+            }
+            val = head->value;
+            temp = head;
+            head = head->next;
+            if (head != nullptr) {
+                head->prev = nullptr;
+            }
+            delete temp;
+            return val;
+        }
+
+        bool is_empty() { // проверка на пустой список
+            return head == nullptr;
+        }
+
+        string peek() { // посмотреть элемент стека
+            if (head == nullptr) return "";
+            return head->value;
+        }
+
+        void print() { // вывод списка
+            print_function(head);
+        }
+
+        void clear() { // удаление списка
+            if (!head) {
+                return;
+            }
+            while (head) {
+                head->value = "";
+                Node* temp = head;
+                head = head->next;
+                delete temp;
+            }
+        }
+
+        ~DoublyLinkedList() {
+            clear();
+        }
+};
+
+// объявление стеков
+DoublyLinkedList stack_op;   // стек для операторов
+DoublyLinkedList stack_calc; // стек для вычисления
 
 // Объявление переменных
 string input_str;            // изначальное выражение
@@ -29,13 +141,6 @@ string polish_str;           // выражение в польской нота�
 double final_result;         // результат выражения
 map <string, int> variables; // переменные в выражении
 
-// объявление стеков
-Node* stack_op = nullptr;   // стек для операторов
-Node* stack_calc = nullptr; // стек для вычисления
-
-//Прототипы функций.
-void menu_commands(int choice);
-void delete_list(Node*&);
 
 // Служебные функции
 void separation() {
@@ -72,94 +177,12 @@ void clear_screen() {
 }
 
 void delete_all_data() {
-    delete_list(stack_op);
-    delete_list(stack_calc);
+    stack_op.clear();
+    stack_calc.clear();
     input_str = "";
     polish_str = "";
     final_result = 0;
     variables.clear();
-}
-
-// Функции стека
-void push_begin(Node*& head, string data) { // добавление в начало
-    Node* new_node = new Node;
-    new_node->value = data;
-    new_node->next = head;
-    head = new_node;
-}
-
-Node* get_last_node(Node* head) {
-    if (head == nullptr) {
-        return nullptr;
-    }
-    while (head->next) {
-        head = head->next;
-    }
-    return head;
-}
-
-void push_end(Node*& head, string data) { // добавление в конец
-    if (head == nullptr) {
-        push_begin(head, data);
-        return;
-    }
-    Node* new_node = new Node;
-    Node* last_node = get_last_node(head);
-    new_node->value = data;
-    new_node->next = nullptr;
-    last_node->next = new_node;
-}
-
-int size_stack(Node* head) {
-    int count = 0;
-    while (head) {
-        count++;
-        head = head->next;
-    }
-    return count;
-}
-
-string pop(Node*& head) {
-    Node* temp = nullptr;
-    string val;
-    if (head == nullptr) {
-        cout << RED << "Ошибка: стек пуст!" << RESET << endl;
-        return "";
-    }
-    val = head->value;
-    temp = head;
-    head = head->next;
-    delete temp;
-    return val;
-}
-
-void delete_list(Node*& head) {
-    if (!head) {
-        return;
-    }
-    while (head) {
-        head->value = "";
-        Node* temp = head;
-        head = head->next;
-        delete temp;
-    }
-}
-
-
-void print_stack(const Node* head) {
-    if (head == nullptr) {
-        return;
-    }
-    print_stack(head->next);
-    cout << head->value << " ";
-}
-
-void print_pnp_stack(const Node* head) {
-    const Node* current = head;
-    while (current != nullptr) {
-        cout << current->value << " ";
-        current = current->next;
-    }
 }
 
 // Другие функции

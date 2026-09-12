@@ -3,9 +3,9 @@
 #include <string>  
 #include <sstream>
 #include <cstring>  
-#include <map>
 
 using namespace std;
+
 
 // Цвета текста
 #define RESET   "\033[0m"
@@ -13,12 +13,15 @@ using namespace std;
 #define GREEN   "\033[32m"
 #define BLUE    "\033[34m"
 
+
 // Флаги
 bool output_simple = false;
 bool output_rpn = false;
 
+
 //Прототипы функций.
 void menu_commands(int choice);
+
 
 // Структуры и классы
 struct Node {
@@ -131,15 +134,16 @@ class DoublyLinkedList {
         }
 };
 
+
 // объявление стеков
 DoublyLinkedList stack_op;   // стек для операторов
 DoublyLinkedList stack_calc; // стек для вычисления
+
 
 // Объявление переменных
 string input_str;            // изначальное выражение
 string polish_str;           // выражение в польской нотации
 double final_result;         // результат выражения
-map <string, int> variables; // переменные в выражении
 
 
 // Служебные функции
@@ -182,22 +186,12 @@ void delete_all_data() {
     input_str = "";
     polish_str = "";
     final_result = 0;
-    variables.clear();
 }
 
-// Другие функции
 
+// Вспомогательные функции для алгоритма ОПЗ
 bool is_operand(string token) {
     if (token.empty()) return false;
-
-    if (isalpha(token[0])) {
-        for (int i = 0; i < token.length(); i++) {
-            if (!isalpha(token[i])) {
-                return false;
-            }
-        }
-        return true;
-    }
 
     for (int i = 0; i < token.length(); i++) {
         if (!isdigit(token[i])) {
@@ -278,6 +272,48 @@ int get_priority(string op) {
     return 0;
 }
 
+string format_double(double n) { // удаляет лишние нули
+    stringstream ss;
+    ss << n;
+    return ss.str();
+}
+
+string fix_num_dot(string str) {
+    for (int i = 0; i < str.length(); i++) {
+        if (str[i] == '.') {
+            str[i] = ',';
+        }
+    }
+    return str;
+}
+
+double action(string n1, string n2, string op) {
+
+    double a = stod(fix_num_dot(n1));
+    double b = stod(fix_num_dot(n2));
+    switch (op[0]) {
+    case '+':
+        return a + b;
+        break;
+    case '-':
+        return a - b;
+        break;
+    case '*':
+        return a * b;
+        break;
+    case '/':
+        if (b == 0) {
+            cout << RED << "Ошибка: деление на ноль!" << RESET << endl;
+            return 0;
+        }
+        return a / b;
+        break;
+    default:
+        return 0;
+        break;
+    }
+}
+
 bool is_valid_rpn(string str) {
     stringstream stream(str);
     string token;
@@ -295,6 +331,8 @@ bool is_valid_rpn(string str) {
     return stack_size == 1;
 }
 
+
+// Алгоритм ОПЗ
 void convert_to_rpn() {
     cout << RED << "Шаги преобразования в ОПН:\n" << RESET << endl;
     stringstream stream(input_str);
@@ -390,48 +428,6 @@ void convert_to_rpn() {
     stack_steps_waiting();
 }
 
-string format_double(double n) { // удаляет лишние нули
-    stringstream ss;
-    ss << n;
-    return ss.str();
-}
-
-string fix_num_dot(string str) {
-    for (int i = 0; i < str.length(); i++) {
-        if (str[i] == '.') {
-            str[i] = ',';
-        }
-    }
-    return str;
-}
-
-double action(string n1, string n2, string op) {
-
-    double a = stod(fix_num_dot(n1));
-    double b = stod(fix_num_dot(n2));
-    switch (op[0]) {
-    case '+':
-        return a + b;
-        break;
-    case '-':
-        return a - b;
-        break;
-    case '*':
-        return a * b;
-        break;
-    case '/':
-        if (b == 0) {
-            cout << RED << "Ошибка: деление на ноль!" << RESET << endl;
-            return 0;
-        }
-        return a / b;
-        break;
-    default:
-        return 0;
-        break;
-    }
-}
-
 void calculate_rpn() {
     clear_screen();
     cout << RED << "Процесс вычисления Обратной Польской Нотации:\n" << RESET << endl;
@@ -496,8 +492,9 @@ void calculate_rpn() {
     waiting();
 }
 
+
+// Функции меню
 void convert_polish_menu() {
-    while (true) {
         clear_screen();
         convert_to_rpn();
         clear_screen();
@@ -507,7 +504,6 @@ void convert_polish_menu() {
         output_simple = true;
         output_rpn = true;
         return;
-    }
 }
 
 void exp_input_menu() {
@@ -521,36 +517,6 @@ void exp_input_menu() {
         }
 
         if (is_valid_simple(input_str)) {
-            variables.clear();
-            string token;
-
-            stringstream stream_vars(input_str);
-            while (stream_vars >> token) {
-                if (is_operand(token) && isalpha(token[0])) {
-                    if (variables.find(token) == variables.end()) {
-                        int val;
-                        cout << RED << "Введите значение " << token << ": " << RESET;
-                        while (!(cin >> val)) {
-                            cout << RED << "Ошибка! Введите целое число: " << RESET;
-                            stream_clear();
-                        }
-                        variables[token] = val;
-                    }
-                }
-            }
-
-            stringstream stream_replace(input_str);
-            string result_str = "";
-            while (stream_replace >> token) {
-                if (is_operand(token) && isalpha(token[0])) {
-                    result_str += format_double(variables[token]) + " ";
-                }
-                else {
-                    result_str += token + " ";
-                }
-            }
-
-            input_str = result_str;
             cout << GREEN << "Выражение корректно: " << RESET << input_str << endl;
             waiting();
             convert_polish_menu();

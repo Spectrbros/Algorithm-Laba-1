@@ -46,6 +46,8 @@ class DoublyLinkedList {
         }
 
     public:
+        DoublyLinkedList() = default;
+
         void push_begin(string data) { // добавление в начало
             Node* new_node = new Node(data);
             new_node->next = head;
@@ -171,11 +173,11 @@ public:
         return data[index];
     }
 
-    int size() const {
+    int size() {
         return size;
     }
 
-    string to_string() const {
+    string output() {
         string res = "";
         for (int i = 0; i < size; i++) {
             res += data[i] + " ";
@@ -196,10 +198,10 @@ public:
 };
 
 
-// объявление стеков
+// объявление стеков и массивов
 DoublyLinkedList stack_op;   // стек для операторов
 DoublyLinkedList stack_calc; // стек для вычисления
-
+DynamicArray polish_array;
 
 // Объявление переменных
 string input_str;            // изначальное выражение
@@ -245,68 +247,9 @@ void delete_all_data() {
     stack_op.clear();
     stack_calc.clear();
     input_str = "";
-    //polish_str = "";
+    polish_array.clear();
     final_result = 0;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 // Вспомогательные функции для алгоритма ОПЗ
@@ -448,7 +391,7 @@ void convert_to_rpn() {
     int pointer_step = 0;
     while (stream >> token) {
         if (is_operand(token)) {
-            //polish_str += token + " ";
+            polish_array.push_back(token);
 
             cout << BLUE << "Ход действий:" << RESET << endl;
             cout << input_str << endl;
@@ -456,7 +399,7 @@ void convert_to_rpn() {
             cout << spaces << GREEN << "|" << RESET << endl;
             pointer_step += token.length() + 1;
             cout << BLUE << "Текущий символ " << RED << token << BLUE << " является числом. Добавляем в финальную строку." << RESET << endl;
-            //cout << GREEN << "Текущая строка ОПН: " << RED << polish_str << RESET << endl;
+            cout << GREEN << "Текущая строка ОПН: " << RED << polish_array.output() << RESET << endl;
             cout << GREEN << "Стек операций: " << RED;
             stack_op.print();
             stack_steps_waiting();
@@ -470,7 +413,7 @@ void convert_to_rpn() {
             cout << spaces << GREEN << "|" << RESET << endl;
             pointer_step += token.length() + 1;
             cout << BLUE << "Текущий символ " << RED << token << BLUE << " является открывающей скобкой. Добавляем в стек операций." << RESET << endl;
-            //cout << GREEN << "Текущая строка ОПН: " << RED << polish_str << RESET << endl;
+            cout << GREEN << "Текущая строка ОПН: " << RED << polish_array.output() << RESET << endl;
             cout << GREEN << "Стек операций: " << RED;
             stack_op.print();
             stack_steps_waiting();
@@ -482,13 +425,13 @@ void convert_to_rpn() {
             cout << spaces << GREEN << "|" << RESET << endl;
             pointer_step += token.length() + 1;
             cout << BLUE << "Текущий символ " << RED << token << BLUE << " является закрывающей скобкой. Выводим из стека все операции до первой открывющей скобки. Удаляем обе скобки." << RESET << endl;
-            //cout << GREEN << "Текущая строка ОПН: " << RED << polish_str << RESET << endl;
+            cout << GREEN << "Текущая строка ОПН: " << RED << polish_array.output() << RESET << endl;
             cout << GREEN << "Стек операций: " << RED;
             stack_op.print();
             stack_steps_waiting();
 
             while (!stack_op.is_empty() && stack_op.peek() != "(") {
-                //polish_str += stack_op.pop() + " ";
+                polish_array.push_back(stack_op.pop());
             }
             if (!stack_op.is_empty()) {
                 stack_op.pop();
@@ -502,11 +445,11 @@ void convert_to_rpn() {
                 string spaces(pointer_step, ' ');
                 cout << spaces << GREEN << "|" << RESET << endl;
                 cout << BLUE << "Текущая операция " << RED << token << BLUE << " ниже или равна по приоритету последней операции в стеке. Выводим операции из стека пока приоритет не станет выше." << RESET << endl;
-                //cout << GREEN << "Текущая строка ОПН: " << RED << polish_str << RESET << endl;
+                cout << GREEN << "Текущая строка ОПН: " << RED << polish_array.output() << RESET << endl;
                 cout << GREEN << "Стек операций: " << RED;
                 stack_op.print();
 
-                //polish_str += stack_op.pop() + " ";
+                polish_array.push_back(stack_op.pop());
                 stack_steps_waiting();
             }
             stack_op.push_begin(token);
@@ -516,7 +459,7 @@ void convert_to_rpn() {
             string spaces(pointer_step, ' ');
             cout << spaces << GREEN << "|" << RESET << endl;
             cout << BLUE << "Текущую операцию " << RED << token << BLUE << " добавляем в стек" << RESET << endl;
-            //cout << GREEN << "Текущая строка ОПН: " << RED << polish_str << RESET << endl;
+            cout << GREEN << "Текущая строка ОПН: " << RED << polish_array.output() << RESET << endl;
             cout << GREEN << "Стек операций: " << RED;
             stack_op.print();
             stack_steps_waiting();
@@ -526,12 +469,12 @@ void convert_to_rpn() {
     }
 
     cout << BLUE << "Выводим все оставшиеся операции из стека в финальную строку." << RESET << endl;
-    //cout << GREEN << "Текущая строка: " << RED << polish_str << RESET << endl;
+    cout << GREEN << "Текущая строка: " << RED << polish_array.output() << RESET << endl;
     cout << GREEN << "Стек операций: " << RED;
     stack_op.print();
 
     while (!stack_op.is_empty()) {
-        //polish_str += stack_op.pop() + " ";
+        polish_array.push_back(stack_op.pop());
     }
     stack_steps_waiting();
 }
@@ -540,7 +483,7 @@ void calculate_rpn() {
     clear_screen();
     cout << RED << "Процесс вычисления Обратной Польской Нотации:\n" << RESET << endl;
 
-    //stringstream stream(polish_str);
+    stringstream stream(polish_array.output());
     string token;
     int pointer_step = 0;
 
@@ -549,7 +492,7 @@ void calculate_rpn() {
             stack_calc.push_begin(token);
 
             cout << BLUE << "Ход действий:" << RESET << endl;
-            //cout << polish_str << endl;
+            cout << polish_array.output() << endl;
             string spaces(pointer_step, ' ');
             cout << spaces << GREEN << "|" << RESET << endl;
             pointer_step += token.length() + 1;
@@ -565,7 +508,7 @@ void calculate_rpn() {
             }
 
             cout << BLUE << "Ход действий:" << RESET << endl;
-            //cout << polish_str << endl;
+            cout << polish_array.output() << endl;
             string spaces(pointer_step, ' ');
             cout << spaces << GREEN << "|" << RESET << endl;
             cout << BLUE << "Текущий символ " << RED << token << BLUE << " является операцией. Берём два числа из стека и выполняем операцию." << RESET << endl;
@@ -600,53 +543,6 @@ void calculate_rpn() {
     }
     waiting();
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 // Функции меню

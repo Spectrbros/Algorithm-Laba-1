@@ -140,14 +140,14 @@ class DoublyLinkedList {
 class DynamicArray {
 private:
     string* data = nullptr;
-    int size = 0;
+    int array_size = 0;
     int capacity = 0;
 
     void resize() {
         int new_capacity = (capacity == 0) ? 1 : capacity + 1;
         string* new_data = new string[new_capacity];
 
-        for (int i = 0; i < size; i++) {
+        for (int i = 0; i < array_size; i++) {
             new_data[i] = data[i];
         }
 
@@ -160,26 +160,26 @@ public:
     DynamicArray() = default;
 
     void push_back(string value) {
-        if (size >= capacity) {
+        if (array_size >= capacity) {
             resize();
         }
-        data[size++] = value;   
+        data[array_size++] = value;
     }
 
     string get(int index) {
-        if (index < 0 || index >= size) {
+        if (index < 0 || index >= array_size) {
             return "";
         }
         return data[index];
     }
 
     int size() {
-        return size;
+        return array_size;
     }
 
     string output() {
         string res = "";
-        for (int i = 0; i < size; i++) {
+        for (int i = 0; i < array_size; i++) {
             res += data[i] + " ";
         }
         return res;
@@ -188,7 +188,7 @@ public:
     void clear() {
         delete[] data;
         data = nullptr;
-        size = 0;
+        array_size = 0;
         capacity = 0;
     }
 
@@ -279,9 +279,7 @@ bool is_func(string token) {
 }
 
 bool is_valid_simple(string input_str) {
-    if (input_str.empty()) {
-        return false;
-    }
+    if (input_str.empty()) return false;
 
     DoublyLinkedList brackets_stack;
     stringstream stream(input_str);
@@ -293,38 +291,46 @@ bool is_valid_simple(string input_str) {
         token_count++;
 
         if (token == "(") {
-            if (last_token != "" && !is_operation(last_token) && last_token != "(") {
+            if (last_token != "" && !is_operation(last_token) && last_token != "(" && !is_func(last_token)) {
                 brackets_stack.clear();
                 return false;
             }
             brackets_stack.push_begin("(");
         }
         else if (token == ")") {
-            if (brackets_stack.is_empty()) {
-                return false;
-            }
+            if (brackets_stack.is_empty()) return false;
             brackets_stack.pop();
-            if (last_token == "(" || is_operation(last_token)) {
+            if (last_token == "(" || is_operation(last_token) || is_func(last_token)) {
                 brackets_stack.clear();
                 return false;
             }
         }
-        else if (is_operation(token)) {
-            if (last_token == "" || is_operation(last_token) || last_token == "(") {
-                brackets_stack.clear();
-                return false;
-            }
-        }
-        else {
+        else if (is_func(token)) {
             if (last_token != "" && !is_operation(last_token) && last_token != "(") {
                 brackets_stack.clear();
                 return false;
             }
         }
+        else if (is_operation(token)) {
+            if (last_token == "" || is_operation(last_token) || last_token == "(" || is_func(last_token)) {
+                brackets_stack.clear();
+                return false;
+            }
+        }
+        else if (is_operand(token)) {
+            if (last_token != "" && !is_operation(last_token) && last_token != "(") {
+                brackets_stack.clear();
+                return false;
+            }
+        }
+        else {
+            brackets_stack.clear();
+            return false;
+        }
         last_token = token;
     }
 
-    bool final_result = (brackets_stack.is_empty() && token_count > 0 && !last_token.empty() && !is_operation(last_token) && last_token != "(");
+    bool final_result = (brackets_stack.is_empty() && token_count > 0 && !last_token.empty() && !is_operation(last_token) && !is_func(last_token) && last_token != "(");
     brackets_stack.clear();
     return final_result;
 }
@@ -345,8 +351,8 @@ string format_double(double n) { // удаляет лишние нули
 
 string fix_num_dot(string str) {
     for (int i = 0; i < str.length(); i++) {
-        if (str[i] == '.') {
-            str[i] = ',';
+        if (str[i] == ',') {
+            str[i] = '.';
         }
     }
     return str;
@@ -389,6 +395,7 @@ void convert_to_rpn() {
     stringstream stream(input_str);
     string token;
     int pointer_step = 0;
+
     while (stream >> token) {
         if (is_operand(token)) {
             polish_array.push_back(token);
@@ -399,6 +406,20 @@ void convert_to_rpn() {
             cout << spaces << GREEN << "|" << RESET << endl;
             pointer_step += token.length() + 1;
             cout << BLUE << "Текущий символ " << RED << token << BLUE << " является числом. Добавляем в финальную строку." << RESET << endl;
+            cout << GREEN << "Текущая строка ОПН: " << RED << polish_array.output() << RESET << endl;
+            cout << GREEN << "Стек операций: " << RED;
+            stack_op.print();
+            stack_steps_waiting();
+        }
+        else if (is_func(token)) {
+            stack_op.push_begin(token);
+
+            cout << BLUE << "Ход действий:" << RESET << endl;
+            cout << input_str << endl;
+            string spaces(pointer_step, ' ');
+            cout << spaces << GREEN << "|" << RESET << endl;
+            pointer_step += token.length() + 1;
+            cout << BLUE << "Текущий символ " << RED << token << BLUE << " является функцией. Добавляем в стек операций." << RESET << endl;
             cout << GREEN << "Текущая строка ОПН: " << RED << polish_array.output() << RESET << endl;
             cout << GREEN << "Стек операций: " << RED;
             stack_op.print();
@@ -424,11 +445,7 @@ void convert_to_rpn() {
             string spaces(pointer_step, ' ');
             cout << spaces << GREEN << "|" << RESET << endl;
             pointer_step += token.length() + 1;
-            cout << BLUE << "Текущий символ " << RED << token << BLUE << " является закрывающей скобкой. Выводим из стека все операции до первой открывющей скобки. Удаляем обе скобки." << RESET << endl;
-            cout << GREEN << "Текущая строка ОПН: " << RED << polish_array.output() << RESET << endl;
-            cout << GREEN << "Стек операций: " << RED;
-            stack_op.print();
-            stack_steps_waiting();
+            cout << BLUE << "Текущий символ " << RED << token << BLUE << " является закрывающей скобкой. Выводим из стека все операции до открывающей скобки." << RESET << endl;
 
             while (!stack_op.is_empty() && stack_op.peek() != "(") {
                 polish_array.push_back(stack_op.pop());
@@ -436,20 +453,29 @@ void convert_to_rpn() {
             if (!stack_op.is_empty()) {
                 stack_op.pop();
             }
+
+            if (!stack_op.is_empty() && is_func(stack_op.peek())) {
+                polish_array.push_back(stack_op.pop());
+            }
+
+            cout << GREEN << "Текущая строка ОПН: " << RED << polish_array.output() << RESET << endl;
+            cout << GREEN << "Стек операций: " << RED;
+            stack_op.print();
+            stack_steps_waiting();
         }
         else if (is_operation(token)) {
-            while (!stack_op.is_empty() && get_priority(token) <= get_priority(stack_op.peek())) {
-
+            while (!stack_op.is_empty() && ((token == "^" && get_priority(token) < get_priority(stack_op.peek())) || (token != "^" && get_priority(token) <= get_priority(stack_op.peek())))) {
                 cout << BLUE << "Ход действий:" << RESET << endl;
                 cout << input_str << endl;
                 string spaces(pointer_step, ' ');
                 cout << spaces << GREEN << "|" << RESET << endl;
-                cout << BLUE << "Текущая операция " << RED << token << BLUE << " ниже или равна по приоритету последней операции в стеке. Выводим операции из стека пока приоритет не станет выше." << RESET << endl;
+                cout << BLUE << "Текущая операция " << RED << token << BLUE << " ниже или равна по приоритету операциям в стеке." << RESET << endl;
+
+                polish_array.push_back(stack_op.pop());
+
                 cout << GREEN << "Текущая строка ОПН: " << RED << polish_array.output() << RESET << endl;
                 cout << GREEN << "Стек операций: " << RED;
                 stack_op.print();
-
-                polish_array.push_back(stack_op.pop());
                 stack_steps_waiting();
             }
             stack_op.push_begin(token);
@@ -468,14 +494,14 @@ void convert_to_rpn() {
         }
     }
 
+    while (!stack_op.is_empty()) {
+        polish_array.push_back(stack_op.pop());
+    }
+
     cout << BLUE << "Выводим все оставшиеся операции из стека в финальную строку." << RESET << endl;
     cout << GREEN << "Текущая строка: " << RED << polish_array.output() << RESET << endl;
     cout << GREEN << "Стек операций: " << RED;
     stack_op.print();
-
-    while (!stack_op.is_empty()) {
-        polish_array.push_back(stack_op.pop());
-    }
     stack_steps_waiting();
 }
 
@@ -501,6 +527,36 @@ void calculate_rpn() {
             stack_calc.print();
             stack_steps_waiting();
         }
+        else if (is_func(token)) {
+            if (stack_calc.is_empty()) {
+                cout << RED << "Ошибка: нехватка операндов для функции!" << RESET << endl;
+                return;
+            }
+
+            cout << BLUE << "Ход действий:" << RESET << endl;
+            cout << polish_array.output() << endl;
+            string spaces(pointer_step, ' ');
+            cout << spaces << GREEN << "|" << RESET << endl;
+            cout << BLUE << "Текущий символ " << RED << token << BLUE << " является функцией. Берём одно число из стека." << RESET << endl;
+            cout << GREEN << "Стек вычислений: " << RED;
+            stack_calc.print();
+            stack_steps_waiting();
+
+            string op1 = stack_calc.pop();
+            double val = stod(fix_num_dot(op1));
+            double temp_res = 0;
+
+            if (token == "sin") temp_res = sin(val);
+            else if (token == "cos") temp_res = cos(val);
+
+            stack_calc.push_begin(format_double(temp_res));
+
+            cout << BLUE << "Выполнили " << RED << token << "(" << op1 << ")" << BLUE " и добавили в стек вычислений." << endl;
+            cout << GREEN << "Стек вычислений: " << RED;
+            stack_calc.print();
+            stack_steps_waiting();
+            pointer_step += token.length() + 1;
+        }
         else if (is_operation(token)) {
             if (stack_calc.size() < 2) {
                 cout << RED << "Ошибка: нехватка операндов!" << RESET << endl;
@@ -511,13 +567,13 @@ void calculate_rpn() {
             cout << polish_array.output() << endl;
             string spaces(pointer_step, ' ');
             cout << spaces << GREEN << "|" << RESET << endl;
-            cout << BLUE << "Текущий символ " << RED << token << BLUE << " является операцией. Берём два числа из стека и выполняем операцию." << RESET << endl;
+            cout << BLUE << "Текущий символ " << RED << token << BLUE << " является операцией. Берём два числа из стека." << RESET << endl;
             cout << GREEN << "Стек вычислений: " << RED;
             stack_calc.print();
             stack_steps_waiting();
-            
-            string op2 = stack_calc.pop();;
-            string op1 = stack_calc.pop();;
+
+            string op2 = stack_calc.pop();
+            string op1 = stack_calc.pop();
 
             double temp_res = action(op1, op2, token);
 
@@ -535,7 +591,7 @@ void calculate_rpn() {
     cout << GREEN << "Стек вычислений: " << RED;
     stack_calc.print();
     stack_steps_waiting();
-    
+
     if (!stack_calc.is_empty()) {
         final_result = stod(fix_num_dot(stack_calc.pop()));
         clear_screen();
@@ -550,7 +606,7 @@ void convert_polish_menu() {
         clear_screen();
         convert_to_rpn();
         clear_screen();
-        //cout << GREEN << "Обратная польская нотация готова:\n" << RESET << polish_str << endl;
+        cout << GREEN << "Обратная польская нотация готова:\n" << RESET << polish_array.output() << endl;
         waiting();
         calculate_rpn();
         output_simple = true;
@@ -589,7 +645,7 @@ void output_data() {
             cout << BLUE << "Исходное выражение: " << RED << input_str << RESET << endl;
         }
         if (output_rpn) {
-            //cout << BLUE << "Обратная польская нотация: " << RED << polish_str << RESET << endl;
+            cout << BLUE << "Обратная польская нотация: " << RED << polish_array.output() << RESET << endl;
         }
         cout << BLUE << "Результат выражения: " << RED << final_result << RESET << endl;
     }
@@ -651,6 +707,7 @@ void lab_page() {
 // Главная функция
 int main() {
     setlocale(0, "");
+    setlocale(LC_NUMERIC, "C");
     while (true) {
         lab_page();
         command_choice();

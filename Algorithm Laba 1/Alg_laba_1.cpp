@@ -138,74 +138,73 @@ class DoublyLinkedList {
 };
 
 class DynamicArray {
-private:
-    string* data = nullptr;
-    int array_size = 0;
-    int capacity = 0;
+    private:
+        string* data = nullptr;
+        int array_size = 0;
+        int capacity = 0;
 
-    void resize() {
-        int new_capacity = (capacity == 0) ? 1 : capacity + 1;
-        string* new_data = new string[new_capacity];
+        void resize() {
+            int new_capacity = (capacity == 0) ? 1 : capacity + 1;
+            string* new_data = new string[new_capacity];
 
-        for (int i = 0; i < array_size; i++) {
-            new_data[i] = data[i];
+            for (int i = 0; i < array_size; i++) {
+                new_data[i] = data[i];
+            }
+
+            delete[] data;
+            data = new_data;
+            capacity = new_capacity;
         }
 
-        delete[] data;
-        data = new_data;
-        capacity = new_capacity;
-    }
+    public:
+        DynamicArray() = default;
 
-public:
-    DynamicArray() = default;
-
-    void push_back(string value) {
-        if (array_size >= capacity) {
-            resize();
+        void push_back(string value) {
+            if (array_size >= capacity) {
+                resize();
+            }
+            data[array_size++] = value;
         }
-        data[array_size++] = value;
-    }
 
-    string get(int index) {
-        if (index < 0 || index >= array_size) {
-            return "";
+        string get(int index) {
+            if (index < 0 || index >= array_size) {
+                return "";
+            }
+            return data[index];
         }
-        return data[index];
-    }
 
-    int size() {
-        return array_size;
-    }
-
-    string output() {
-        string res = "";
-        for (int i = 0; i < array_size; i++) {
-            res += data[i] + " ";
+        int size() {
+            return array_size;
         }
-        return res;
-    }
 
-    void clear() {
-        delete[] data;
-        data = nullptr;
-        array_size = 0;
-        capacity = 0;
-    }
+        string output() {
+            string res = "";
+            for (int i = 0; i < array_size; i++) {
+                res += data[i] + " ";
+            }
+            return res;
+        }
 
-    ~DynamicArray() {
-        clear();
-    }
+        void clear() {
+            delete[] data;
+            data = nullptr;
+            array_size = 0;
+            capacity = 0;
+        }
+
+        ~DynamicArray() {
+            clear();
+        }
 };
 
 
 // объявление стеков и массивов
 DoublyLinkedList stack_op;   // стек для операторов
 DoublyLinkedList stack_calc; // стек для вычисления
-DynamicArray polish_array;
+DynamicArray polish_array;   // динамический массив для записи ОПН
 
 // Объявление переменных
 string input_str;            // изначальное выражение
-//string polish_str;           // выражение в польской нотации
 double final_result;         // результат выражения
 
 
